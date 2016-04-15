@@ -58,10 +58,16 @@ def load_files(directory, network_id):
     
     # Read in graph information
     def split_line(x):
-        return tuple(re.split(' ', x.strip()))
+        return tuple(re.split(' |\t', x.strip()))
     
     g = nx.Graph()
-    g.add_edges_from(split_line(line) for line in edges_file)
+    lis = [split_line(line) for line in edges_file]
+    g.add_edges_from(lis)
+    # g.add_edges_from(split_line(line) for line in edges_file)
+
+    # g_edges = g.edges()
+    # missing_edges = [line if line not in g_edges and (line[1], line[0]) not in g_edges else None for line in lis]
+    # sum(0 if value == None else 1 for value in missing_edges) = 0
     g.add_edges_from((network_id, circle_id) for circle_id in
                      re.split('\t', circles_file.read().strip())[1:])
     
@@ -94,6 +100,8 @@ def load_files(directory, network_id):
         feat_id = tmp[0]
         feats = tmp[1:]
         features['data'].append(feat_id)
+
+        # TODO: these are mostly False, so we should just have a sparse representation
         feat_values = map(to_bool, feats)
         
         if len(feat_values) != len(feature_names):
