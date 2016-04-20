@@ -14,8 +14,9 @@ class Network:
             (by default uncomputed as {})
             (indexed by network edge object edges)
     """
-    def __init__(self, features, networkx_obj, all_pairs_edges = {}):
-        self.features = features
+    def __init__(self, featureVec, featuresByName, networkx_obj, all_pairs_edges = {}):
+        self.featureVec = featureVec
+        self.featureByName = featuresByName
         self.networkx_obj = networkx_obj
         self.all_pairs_edges = all_pairs_edges
     
