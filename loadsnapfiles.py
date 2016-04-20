@@ -67,13 +67,17 @@ def load_files(directory, network_id):
     
     # Read in features
     feature_names = [line.strip() for line in featnames_file]
-    features = {name: [] for name in feature_names}
-    features['data'] = []
+    featuresName = {name: [] for name in feature_names}
+    featuresName['data'] = []
+
+    # Vector of features as they appear in data
+    featuresVec = []
+    featuresVec.append(map(int, egoFeats))
     
     # Features for network_id
     # features = { feature_name1: [network_ids that are True for feature_name1],
     #              feature_name2: [network_ids that are True for feature_name2], ...}
-    features['data'].append(network_id)
+    featuresName['data'].append(network_id)
 
     def to_bool(x):
         return False if x == '0' else True
@@ -86,14 +90,15 @@ def load_files(directory, network_id):
         raise Exception('Wrong size of features.')
     
     for i in xrange(len(network_id_feat_values)):
-        features[feature_names[i]].append(network_id_feat_values[i])
+        featuresName[feature_names[i]].append(network_id_feat_values[i])
     
     # Repeat for other nodes (besides network_id) in network
     for line in feat_file:
         tmp = split_line(line)
         feat_id = tmp[0]
         feats = tmp[1:]
-        features['data'].append(feat_id)
+        featuresName['data'].append(feat_id)
+        featuresVec.append(map(int, feats))
         feat_values = map(to_bool, feats)
         
         if len(feat_values) != len(feature_names):
@@ -101,11 +106,11 @@ def load_files(directory, network_id):
             raise Exception('Wrong size of features.')
     
         for i in xrange(len(feat_values)):
-            features[feature_names[i]].append(feat_values[i])
+            featuresName[feature_names[i]].append(feat_values[i])
     
     # Done!
     
-    network = Network.Network(features, g)
+    network = Network.Network(featuresVec, featuresName, g)
 
     edges_file.close()
     circles_file.close()
