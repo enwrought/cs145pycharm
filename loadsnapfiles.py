@@ -78,6 +78,7 @@ def load_files(directory, network_id):
 
     # Vector of features as they appear in data
     featuresVec = []
+    egoFeats = split_line(egofeat_file.read())
     featuresVec.append(map(int, egoFeats))
     
     # Features for network_id
