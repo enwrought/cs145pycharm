@@ -4,7 +4,7 @@ import numpy as np
 from sklearn.decomposition import PCA
 
 
-class PCA:
+class featurePCA:
     """
         network = Network object
 
