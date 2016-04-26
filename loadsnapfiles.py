@@ -106,6 +106,7 @@ def load_files(directory, network_id):
         feats = tmp[1:]
 
         # TODO: these are mostly False, so we should just have a sparse representation
+
         featuresName['data'].append(feat_id)
         featuresVec.append(map(int, feats))
         feat_values = map(to_bool, feats)
