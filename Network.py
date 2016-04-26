@@ -34,9 +34,13 @@ class Network:
 
     # Calculate edge distances in graph as inverse of number of mutual friends
     def mutualFriendDist(graph):
+        # edge list for input graph
         edges = nx.edges(graph)
+
+        # weights = {edge : weight}
         weights = {}
 
+        # calculate edge weight and add to dictionary
         for edge in edges:
             num_mutual = float(len(nx.common_neighbors(graph, edge[0], edge[1])))
             weight = 1 / (1 + num_mutual)

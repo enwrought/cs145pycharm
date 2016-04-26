@@ -29,7 +29,7 @@ class featurePCA:
     # Inputs a network and a list of relevant feature ID's
     # Calculates PCA on input features
     def featurePCA(network, featureIDs):
-        featureList = network.features
+        featureList = (network.features).values()
 
         filteredList = [filterByIndex(user, featureIDs) for user in featureList]
         pca = PCA(n_components=len(featureIDs))
