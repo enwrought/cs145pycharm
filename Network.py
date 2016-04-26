@@ -7,7 +7,7 @@ class Network:
     """
         Stub for Netork class
         
-        networkx_obj = NetworkX graph
+        graph = NetworkX graph
         features = {featurenames: [network_ids with true as the features]}
         
         all_pairs_edges = distance of edges in the graph in data space 
@@ -17,6 +17,6 @@ class Network:
     def __init__(self, featureVec, featuresByName, networkx_obj, all_pairs_edges = {}):
         self.featureVec = featureVec
         self.featureByName = featuresByName
-        self.networkx_obj = networkx_obj
+        self.graph = networkx_obj
         self.all_pairs_edges = all_pairs_edges
     
