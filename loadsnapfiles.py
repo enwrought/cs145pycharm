@@ -77,9 +77,9 @@ def load_files(directory, network_id):
     featuresName['data'] = []
 
     # Vector of features as they appear in data
-    featuresVec = []
+    featuresVec = {}
     egoFeats = split_line(egofeat_file.read())
-    featuresVec.append(map(int, egoFeats))
+    featuresVec[network_id] = (map(int, egoFeats))
     
     # Features for network_id
     # features = { feature_name1: [network_ids that are True for feature_name1],
@@ -107,7 +107,7 @@ def load_files(directory, network_id):
 
         # TODO: these are mostly False, so we should just have a sparse representation
         featuresName['data'].append(feat_id)
-        featuresVec.append(map(int, feats))
+        featuresVec[feat_id] = (map(int, feats))
         feat_values = map(to_bool, feats)
         
         if len(feat_values) != len(feature_names):

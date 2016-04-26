@@ -5,6 +5,9 @@ import numpy as np
 
 class featureSalary:
     """
+        Analyze graphs based with salary as only node feature. Assumes salary is 
+        stored in the featureVec parameter of the input Network object.
+        
         network = Network object
 
         edgeList = list of edges in graph
