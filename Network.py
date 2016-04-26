@@ -10,7 +10,7 @@ class Network:
         graph = NetworkX graph
         features = {featurenames: [network_ids with true as the features]}
         
-        all_pairs_edges = distance of edges in the graph in data space 
+        edgeWeights = distance of edges in the graph in data space 
             (by default uncomputed as {})
             (indexed by network edge object edges)
     """
@@ -18,5 +18,12 @@ class Network:
         self.featureVec = featureVec
         self.featureByName = featuresByName
         self.graph = networkx_obj
-        self.all_pairs_edges = all_pairs_edges
-    
+        self.edgeWeights = all_pairs_edges
+
+        if (all_pairs_edges == {}):
+            self.edgeWeights = getDistances(networkx_obj)
+
+        nx.set_edge_attributes(self.graph, 'graph_distance', self.edgeWeights)
+
+    def getDistances(graph):
+        # TODO: Calculate edge weights
