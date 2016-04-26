@@ -8,22 +8,29 @@ class Network:
         Stub for Netork class
         
         graph = NetworkX graph
-        features = {featurenames: [network_ids with true as the features]}
+
+        featureVec = [feature vector for each node in the graph]
+
+        featuresByName = {featurenames: [network_ids with true as the features]}
         
         edgeWeights = distance of edges in the graph in data space 
             (by default uncomputed as {})
             (indexed by network edge object edges)
     """
+    
     def __init__(self, featureVec, featuresByName, networkx_obj, all_pairs_edges = {}):
+        # Vector of features as they appear in data
         self.featureVec = featureVec
         self.featureByName = featuresByName
         self.graph = networkx_obj
         self.edgeWeights = all_pairs_edges
 
+        # If no edge weights were provided, calculate using default function
         if (all_pairs_edges == {}):
-            self.edgeWeights = getDistances(networkx_obj)
+            self.edgeWeights = mutualFriendDist(networkx_obj)
 
+        # Add edge weights to networx object
         nx.set_edge_attributes(self.graph, 'graph_distance', self.edgeWeights)
 
-    def getDistances(graph):
-        # TODO: Calculate edge weights
+    def mutualFriendDist(graph):
+        # TODO: Calculate edge weights by mutual friends
