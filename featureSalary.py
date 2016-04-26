@@ -5,7 +5,7 @@ import numpy as np
 
 class featureSalary:
     """
-        network = Networkx object
+        network = Network object
 
         edgeList = list of edges in graph
 

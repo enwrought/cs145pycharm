@@ -10,6 +10,7 @@ class Network:
         graph = NetworkX graph
 
         featureVec = [feature vector for each node in the graph]
+            Vector of features as they appear in data
 
         featuresByName = {featurenames: [network_ids with true as the features]}
         
@@ -17,9 +18,8 @@ class Network:
             (by default uncomputed as {})
             (indexed by network edge object edges)
     """
-    
+
     def __init__(self, featureVec, featuresByName, networkx_obj, all_pairs_edges = {}):
-        # Vector of features as they appear in data
         self.featureVec = featureVec
         self.featureByName = featuresByName
         self.graph = networkx_obj
@@ -32,5 +32,15 @@ class Network:
         # Add edge weights to networx object
         nx.set_edge_attributes(self.graph, 'graph_distance', self.edgeWeights)
 
+    # Calculate edge distances in graph as inverse of number of mutual friends
     def mutualFriendDist(graph):
-        # TODO: Calculate edge weights by mutual friends
+        edges = nx.edges(graph)
+        weights = {}
+
+        for edge in edges:
+            num_mutual = float(len(nx.common_neighbors(graph, edge[0], edge[1])))
+            weight = 1 / (1 + num_mutual)
+            weights[edge] = weight
+
+        return weights
+
