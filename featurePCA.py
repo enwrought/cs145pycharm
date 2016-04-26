@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 
 class featurePCA:
     """
-        network = Networkx object
+        network = Network object
 
         edgeList = list of edges in graph
 
@@ -38,4 +38,3 @@ class featurePCA:
     # TODO: Add relevant graphs
     def generateGraphs():
         pass
-        
