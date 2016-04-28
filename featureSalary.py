@@ -23,7 +23,12 @@ class FeatureSalary:
         self.salEdgeWeights = self.getSalEdgeWeights(network.graph, network.featuresVec)
 
         # Add salary ratio weights to networkx object
-        nx.set_edge_attributes(network.graph, 'salary_ratio', self.salEdgeWeights)
+
+        # Again we don't use this yet
+        # nx.set_edge_attributes(network.graph, 'salary_ratio', self.salEdgeWeights)
+
+        self.salVals = network.featuresVec.values()
+        # self.edgeWeights = network.edgeWeights
 
     # TODO: pass in a "metric" lambda function instead of automatically defaulting to minRatio
     def getSalEdgeWeights(self, graph, salaries):
@@ -41,11 +46,10 @@ class FeatureSalary:
             salRatioEdges[edge] = ratio
         return salRatioEdges
 
-    # TODO: assign the values to self.salVals, self.salRatios, and self.edgeWeights
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
         plt.figure(1)
-        plt.hist(self.salEdgeWeights)
+        plt.hist(self.network.edgeWeights)
         plt.xlabel('Weight')
         plt.ylabel('Frequency')
         plt.title('Weight Frequencies')
@@ -57,13 +61,13 @@ class FeatureSalary:
         plt.title('Salary Frequencies')
 
         plt.figure(3)
-        plt.hist(self.salRatios)
+        plt.hist(self.salEdgeWeights)
         plt.xlabel('Salary Ratios on Edges')
         plt.ylabel('Frequency')
         plt.title('Salary Ratio on Edge Frequencies')
 
         plt.figure(4)
-        plt.plot(self.edgeWeights, self.salRatios, 'ro')
+        plt.plot(self.network.edgeWeights, self.salEdgeWeights, 'ro')
         plt.xlabel('Edge Weights')
         plt.ylabel('Salary Ratios')
         plt.title('Edge Weights vs Salary Ratios')
