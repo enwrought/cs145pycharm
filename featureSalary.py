@@ -100,4 +100,20 @@ class FeatureSalary:
         plt.ylabel('Salary Difference')
         plt.title('Mutual Friends vs Salary Differences')
 
+        plt.figure(7)
+        sorted_edge_weights = sorted(edgeWeights)
+        edge_weights_percentile = map(lambda x: float(x)/len(sorted_edge_weights), xrange(len(sorted_edge_weights)))
+        plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
+        plt.xlabel('Number of mutual friends')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Social Distance')
+
+        plt.figure(8)
+        sorted_salaries = sorted(self.salVals)
+        salaries_percentile = map(lambda x: float(x) / len(sorted_salaries), xrange(len(sorted_salaries)))
+        plt.plot(sorted_salaries, salaries_percentile, 'b-')
+        plt.xlabel('Annual income (thousands)')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Salary')
+
         plt.show()
