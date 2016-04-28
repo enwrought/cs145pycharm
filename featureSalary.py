@@ -1,4 +1,3 @@
-import Network
 import networkx as nx
 import numpy as np
 import matplotlib.pyplot as plt
@@ -20,15 +19,17 @@ class FeatureSalary:
         self.network = network
         # 1) We don't use this. 2) This is definitely wrong
         # self.edgeList = nx.edges(network)
-        self.salEdgeWeights = self.getSalEdgeWeights(network.graph, network.featuresVec)
+        self.salEdgeWeights = self.getSalEdgeWeights(network.graph, network.featureVec)
 
         # Add salary ratio weights to networkx object
 
         # Again we don't use this yet
         # nx.set_edge_attributes(network.graph, 'salary_ratio', self.salEdgeWeights)
 
-        self.salVals = network.featuresVec.values()
+        self.salVals = network.featureVec.values()
         # self.edgeWeights = network.edgeWeights
+
+        self.generateGraphs()
 
     # TODO: pass in a "metric" lambda function instead of automatically defaulting to minRatio
     def getSalEdgeWeights(self, graph, salaries):
@@ -49,7 +50,7 @@ class FeatureSalary:
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
         plt.figure(1)
-        plt.hist(self.network.edgeWeights)
+        plt.hist(self.network.edgeWeights.values())
         plt.xlabel('Weight')
         plt.ylabel('Frequency')
         plt.title('Weight Frequencies')
@@ -61,13 +62,14 @@ class FeatureSalary:
         plt.title('Salary Frequencies')
 
         plt.figure(3)
-        plt.hist(self.salEdgeWeights)
+        plt.hist(self.salEdgeWeights.values())
         plt.xlabel('Salary Ratios on Edges')
         plt.ylabel('Frequency')
         plt.title('Salary Ratio on Edge Frequencies')
 
         plt.figure(4)
-        plt.plot(self.network.edgeWeights, self.salEdgeWeights, 'ro')
+        # TODO: double check that .values() returns the same order
+        plt.plot(self.network.edgeWeights.values(), self.salEdgeWeights.values(), 'ro')
         plt.xlabel('Edge Weights')
         plt.ylabel('Salary Ratios')
         plt.title('Edge Weights vs Salary Ratios')

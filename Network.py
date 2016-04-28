@@ -2,6 +2,7 @@
 # To change this template file, choose Tools | Templates
 # and open the template in the editor.
 import networkx as nx
+import featureSalary
 
 
 class Network:
@@ -32,6 +33,7 @@ class Network:
         self.edgeWeights = (self.mutualFriendDist(networkx_obj)
                             if not all_pairs_edges else all_pairs_edges)
 
+        self.salaries = featureSalary.FeatureSalary(self)
         # Add edge weights to networkx object
 
         # Right now we never use any of the networkX attributes, so there is no point in wasting memory

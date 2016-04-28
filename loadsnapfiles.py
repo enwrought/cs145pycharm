@@ -71,8 +71,11 @@ def load_files(directory, network_id):
     # g_edges = g.edges()
     # missing_edges = [line if line not in g_edges and (line[1], line[0]) not in g_edges else None for line in lis]
     # sum(0 if value == None else 1 for value in missing_edges) = 0
-    g.add_edges_from((network_id, circle_id) for circle_id in
-                     re.split('\t', circles_file.read().strip())[1:])
+
+    circles = re.split('\n', circles_file.read())
+    for line in circles:
+        g.add_edges_from((network_id, circle_id) for circle_id in
+                        re.split('\t', line)[1:])
     
     # Read in features
     # feature_names = [line.strip() for line in featnames_file]
