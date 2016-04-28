@@ -42,36 +42,62 @@ class FeatureSalary:
 
         salRatioEdges = {}
         for edge in edges:
-            ratio = float(salaries[edge[0]]) / salaries[edge[1]]
-            ratio = min(ratio, 1 / ratio)
+            # ratio = float(salaries[edge[0]]) / salaries[edge[1]]
+            # ratio = min(ratio, 1 / ratio)
+            ratio = abs(salaries[edge[0]] - salaries[edge[1]])
             salRatioEdges[edge] = ratio
         return salRatioEdges
 
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
+        edgeWeights = self.network.edgeWeights.values()
+        salEdges = self.salEdgeWeights.values()
+        # Histogram of edge weights from network
         plt.figure(1)
-        plt.hist(self.network.edgeWeights.values())
+        plt.hist(edgeWeights)
         plt.xlabel('Weight')
         plt.ylabel('Frequency')
-        plt.title('Weight Frequencies')
+        plt.title('Mutual Friend Frequencies')
 
+        # Histogram of salaries of all nodes
         plt.figure(2)
-        plt.hist(self.salVals)
+        plt.hist(self.salVals, bins=40)
         plt.xlabel('Salary')
         plt.ylabel('Frequency')
         plt.title('Salary Frequencies')
 
+        # Histogram of salary ratios along edges
         plt.figure(3)
-        plt.hist(self.salEdgeWeights.values())
-        plt.xlabel('Salary Ratios on Edges')
+        plt.hist(salEdges)
+        plt.xlabel('Salary Differences on Edges')
         plt.ylabel('Frequency')
-        plt.title('Salary Ratio on Edge Frequencies')
+        plt.title('Salary Difference on Edges Frequencies')
 
         plt.figure(4)
         # TODO: double check that .values() returns the same order
-        plt.plot(self.network.edgeWeights.values(), self.salEdgeWeights.values(), 'ro')
-        plt.xlabel('Edge Weights')
+        plt.plot(edgeWeights, salEdges, 'ro')
+        plt.xlabel('Mutual Friends')
         plt.ylabel('Salary Ratios')
-        plt.title('Edge Weights vs Salary Ratios')
+        plt.title('Mutual Friends vs Salary Differences')
+
+
+        plt.figure(5)
+        # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(), self.salEdgeWeights.values(), bins=50)
+        # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+        # plt.imshow(heatmap, extent=extent)
+        plt.hexbin(edgeWeights, salEdges, gridsize=40, bins=15)
+        cb = plt.colorbar()
+        plt.xlabel('Mutual Friends')
+        plt.ylabel('Salary Difference')
+        plt.title('Mutual Friends vs Salary Differences')
+
+
+        plt.figure(6)
+        plt.hexbin(edgeWeights, salEdges, gridsize=(25,10), bins=15)
+        plt.axis([min(edgeWeights), 50, min(salEdges), 20])
+        cb = plt.colorbar()
+        plt.xlabel('Mutual Friends')
+        plt.ylabel('Salary Difference')
+        plt.title('Mutual Friends vs Salary Differences')
 
         plt.show()

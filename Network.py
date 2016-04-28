@@ -53,8 +53,8 @@ class Network:
 
         # calculate edge weight and add to dictionary
         for edge in edges:
-            num_mutual = float(len(sorted(nx.common_neighbors(graph, edge[0], edge[1]))))
-            weight = 1 / (1 + num_mutual)
+            num_mutual = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+            weight = 1 + num_mutual
             weights[edge] = weight
 
         return weights
