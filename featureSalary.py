@@ -157,7 +157,7 @@ class FeatureSalary:
         salEdges2 = sorted(salEdges2)
         salary_diff_percentile = map(lambda x: float(x) / len(sorted_salary_diff),
                                      xrange(len(sorted_salary_diff)))
-        plt.plot(sorted_salary_diff, salary_diff_percentile, 'b-')
+        plt.plot(salEdges2, salary_diff_percentile, 'b-')
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference')
