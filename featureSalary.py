@@ -1,5 +1,6 @@
 import networkx as nx
 import numpy as np
+import math
 import matplotlib.pyplot as plt
 
 
@@ -29,6 +30,10 @@ class FeatureSalary:
         self.salVals = network.featureVec.values()
         # self.edgeWeights = network.edgeWeights
 
+        # List of positive indices
+        self.positive_income = filter(lambda x: self.salVals[x] >= 0, xrange(len(self.salVals)))
+        self.positive_ratios = filter(lambda x: self.salEdgeWeights.values()[x] >= 0, xrange(len(self.salVals)))
+
         self.generateGraphs()
 
     # TODO: pass in a "metric" lambda function instead of automatically defaulting to minRatio
@@ -37,6 +42,8 @@ class FeatureSalary:
             Takes in a graph and dictionary of salaries.
             salaries = {node_id : salary}
             sets edge weights as ratio of salaries between connected nodes
+
+            If either fo the salaries are 0, then we set it to some negative value we can filter
         """
         edges = nx.edges(graph)
 
@@ -45,13 +52,18 @@ class FeatureSalary:
             # ratio = float(salaries[edge[0]]) / salaries[edge[1]]
             # ratio = min(ratio, 1 / ratio)
             ratio = abs(salaries[edge[0]] - salaries[edge[1]])
+            if salaries[edge[0]] < 0 or salaries[edge[1]] < 0:
+                # Set to some negative value we can filter
+                ratio = -1.0
             salRatioEdges[edge] = ratio
         return salRatioEdges
 
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
-        edgeWeights = self.network.edgeWeights.values()
-        salEdges = self.salEdgeWeights.values()
+        # edgeWeights and salEdges only include people that have salary information
+        edgeWeights = map(lambda x: self.network.edgeWeights.values()[x], self.positive_ratios)
+        salEdges = map(lambda x: self.salEdgeWeights.values()[x], self.positive_ratios)
+        salVals = map(lambda x: self.salVals[x], self.positive_income)
         # Histogram of edge weights from network
         plt.figure(1)
         plt.hist(edgeWeights)
@@ -61,7 +73,7 @@ class FeatureSalary:
 
         # Histogram of salaries of all nodes
         plt.figure(2)
-        plt.hist(self.salVals, bins=40)
+        plt.hist(salVals, bins=40)
         plt.xlabel('Salary')
         plt.ylabel('Frequency')
         plt.title('Salary Frequencies')
@@ -109,11 +121,45 @@ class FeatureSalary:
         plt.title('CDF of Social Distance')
 
         plt.figure(8)
-        sorted_salaries = sorted(self.salVals)
+        sorted_salaries = sorted(salVals)
         salaries_percentile = map(lambda x: float(x) / len(sorted_salaries), xrange(len(sorted_salaries)))
         plt.plot(sorted_salaries, salaries_percentile, 'b-')
         plt.xlabel('Annual income (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary')
+
+        plt.figure(9)
+        sorted_edge_weights = map(lambda x: math.log(x), sorted(edgeWeights))
+        edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)), xrange(len(sorted_edge_weights)))
+        plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
+        plt.xlabel('log (# mutual friends)')
+        plt.ylabel('log P(#mutual friends > x)')
+        plt.title('Log-Log Rank Plot of Social Distance')
+
+        plt.figure(10)
+        sorted_salaries = map(lambda x: math.log(x), sorted(salVals))
+        salaries_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salaries)), xrange(len(sorted_salaries)))
+        plt.plot(sorted_salaries, salaries_percentile, 'b-')
+        plt.xlabel('Log (Annual income (thousands))')
+        plt.ylabel('log P(Salary > x)')
+        plt.title('Log-Log Rank Plot of Salary')
+
+        plt.figure(11)
+        salEdges2 = filter(lambda x: x > 0, salEdges)
+        sorted_salary_diff = map(lambda x: math.log(x), sorted(salEdges2))
+        salary_diff_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salary_diff)), xrange(len(sorted_salary_diff)))
+        plt.plot(sorted_salary_diff, salary_diff_percentile, 'b-')
+        plt.xlabel('Log (Salary Difference)')
+        plt.ylabel('log P(Salary Difference > x)')
+        plt.title('Log-Log Rank Plot of Salary Differences')
+
+        plt.figure(12)
+        salEdges2 = sorted(salEdges2)
+        salary_diff_percentile = map(lambda x: float(x) / len(sorted_salary_diff),
+                                     xrange(len(sorted_salary_diff)))
+        plt.plot(sorted_salary_diff, salary_diff_percentile, 'b-')
+        plt.xlabel('Salary difference (thousands)')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Salary Difference')
 
         plt.show()

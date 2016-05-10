@@ -144,7 +144,8 @@ def load_files(directory, network_id):
         nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
                                  xrange(len(features[user_id])))
         salaries = map(lambda index: salary_dic[index], nonzero_indices)
-        user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
+        # user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
+        user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
 
     # Done!
     
