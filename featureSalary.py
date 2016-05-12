@@ -1,5 +1,7 @@
 import networkx as nx
 import numpy as np
+import scipy
+import scipy.stats
 import math
 import matplotlib.pyplot as plt
 
@@ -87,14 +89,19 @@ class FeatureSalary:
 
         plt.figure(4)
         # TODO: double check that .values() returns the same order
-        plt.plot(edgeWeights, salEdges, 'ro')
+        fit = np.polyfit(edgeWeights, salEdges, 1)
+        slope, intercept, r_value, p_value, std_err = scipy.stats.linregress(edgeWeights, salEdges)
+        print "salEdges = %f * edgeWeights + %f" % (fit[0], fit[1])
+        print "(m, b, R^2, p, std_err) = (%f, %f, %f, %f, %f)" % (slope, intercept, r_value ** 2, p_value, std_err)
+        fit_fn = np.poly1d(fit)
+        plt.plot(edgeWeights, salEdges, 'ro', edgeWeights, fit_fn(edgeWeights), '--k')
         plt.xlabel('Mutual Friends')
         plt.ylabel('Salary Ratios')
         plt.title('Mutual Friends vs Salary Differences')
 
-
         plt.figure(5)
-        # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(), self.salEdgeWeights.values(), bins=50)
+        # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(),
+        #                                          self.salEdgeWeights.values(), bins=50)
         # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
         # plt.imshow(heatmap, extent=extent)
         plt.hexbin(edgeWeights, salEdges, gridsize=40, bins=15)
@@ -103,9 +110,8 @@ class FeatureSalary:
         plt.ylabel('Salary Difference')
         plt.title('Mutual Friends vs Salary Differences')
 
-
         plt.figure(6)
-        plt.hexbin(edgeWeights, salEdges, gridsize=(25,10), bins=15)
+        plt.hexbin(edgeWeights, salEdges, gridsize=(25, 10), bins=15)
         plt.axis([min(edgeWeights), 50, min(salEdges), 20])
         cb = plt.colorbar()
         plt.xlabel('Mutual Friends')
@@ -130,7 +136,8 @@ class FeatureSalary:
 
         plt.figure(9)
         sorted_edge_weights = map(lambda x: math.log(x), sorted(edgeWeights))
-        edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)), xrange(len(sorted_edge_weights)))
+        edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)),
+                                      xrange(len(sorted_edge_weights)))
         plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
         plt.xlabel('log (# mutual friends)')
         plt.ylabel('log P(#mutual friends > x)')
