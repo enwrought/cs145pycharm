@@ -3,6 +3,7 @@
 # and open the template in the editor.
 import networkx as nx
 import featureSalary
+import math
 
 
 class Network:
@@ -30,7 +31,7 @@ class Network:
         self.graph = networkx_obj
 
         # If no edge weights were provided, calculate using default function
-        self.edgeWeights = (self.mutualFriendDist(networkx_obj)
+        self.edgeWeights = (self.friend_dist(networkx_obj)
                             if not all_pairs_edges else all_pairs_edges)
 
         self.salaries = featureSalary.FeatureSalary(self)
@@ -41,7 +42,7 @@ class Network:
 
     # TODO: maybe change this to editing self.all_pairs_edges directly (instead of a static function)
     # TODO: pass a lambda function as a parameter metric of distance
-    def mutualFriendDist(self, graph):
+    def friend_dist(self, graph):
         """
             Calculate edge distances in graph as inverse of number of mutual friends
         """
@@ -53,9 +54,21 @@ class Network:
 
         # calculate edge weight and add to dictionary
         for edge in edges:
-            num_mutual = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
-            weight = 1 + num_mutual
+            weight = self.__ratio_mutual_friends_product(graph, edge)
             weights[edge] = weight
 
         return weights
+
+    def __num_mutual_friends(self, graph, edge):
+        return len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+
+    def __ratio_mutual_friends(self, graph, edge):
+        intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+        union = len(set(nx.neighbors(graph, edge[0])) | set(nx.neighbors(graph, edge[1])))
+        return float(intersection) / union
+
+    def __ratio_mutual_friends_product(self, graph, edge):
+        intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+        union = len(nx.neighbors(graph, edge[0]))  * len(nx.neighbors(graph, edge[1]))
+        return float(intersection) / math.sqrt(union)
 

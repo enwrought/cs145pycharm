@@ -65,6 +65,7 @@ class FeatureSalary:
     def generateGraphs(self):
         # edgeWeights and salEdges only include people that have salary information
         edgeWeights = map(lambda x: self.network.edgeWeights.values()[x], self.positive_ratios)
+        print edgeWeights
         salEdges = map(lambda x: self.salEdgeWeights.values()[x], self.positive_ratios)
         salVals = map(lambda x: self.salVals[x], self.positive_income)
         # Histogram of edge weights from network
