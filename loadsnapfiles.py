@@ -3,6 +3,7 @@ import sys
 import os
 import re
 import networkx as nx
+import google_crawl as crawl
 
 import Network
 
@@ -75,7 +76,7 @@ def load_files(directory, network_id):
     circles = re.split('\n', circles_file.read())
     for line in circles:
         g.add_edges_from((network_id, circle_id) for circle_id in
-                        re.split('\t', line)[1:])
+                         re.split('\t', line)[1:])
     
     # Read in features
     # feature_names = [line.strip() for line in featnames_file]
@@ -136,13 +137,14 @@ def load_files(directory, network_id):
     # where index_of_feature (int) is the line number (0-indexed) in the featnames file
     salary_dic = {int(split_line(line)[0]): int(split_line(line)[1]) for line in filter_file}
     # Estimate of the average salary, assuming each word is weighted approximately equally
-    average_salary = float(sum(salary_dic.values())) / len(salary_dic.values())
+    # average_salary = float(sum(salary_dic.values())) / len(salary_dic.values())
 
     user_salaries = {}
     for user_id in features:
         # nonzero indices that have a salary value in the .filter (salary) file
         nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
                                  xrange(len(features[user_id])))
+        # TODO: search
         salaries = map(lambda index: salary_dic[index], nonzero_indices)
         # user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
         user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
