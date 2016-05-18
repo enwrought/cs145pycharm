@@ -1,24 +1,35 @@
 import re
 import urllib2
 import itertools
+import random
+import time
 
 
 def query_google(keywords, attempts=3):
     """
-        Searches google using all keywords.
+        Searches google or bing using all keywords.
+        To prevent being blocked, we alternate between different headers,
+        search engines, and delay a random amount of time before allowing
+        another search.
 
         @param{list}{keywords} List of strings to search in google
         @param{int}{attempts} Number of total attempts to reach website in case of error.
                               Defaults to 3.
         @returns The HTML of the Google result page.
     """
+    all_headers = ['Mozilla/5.0', 'Mozilla/5.0 (Windows NT 6.1) ', 'AppleWebKit/535.7 (KHTML, like Gecko)',
+                   'Chrome/16.0.912.77', 'Safari/535.7']
+    header = random.choice(all_headers)
+    search_engines_texts = ['http://www.google.com/search?q=%s%%20salary',
+                            'http://www.bing.com/search?q=%s%%20salary']
+    search_url = random.choice(search_engines_texts)
     opener = urllib2.build_opener()
-    opener.addheaders = [('User-agent', 'Mozilla/5.0 (Windows NT 6.1) '
-                                        'AppleWebKit/535.7 (KHTML, like Gecko) '
-                                        'Chrome/16.0.912.77 Safari/535.7')]
+    opener.addheaders = [('User-agent', random.choice(header))]
+
+    time.sleep(random.choice(xrange(10)) + random.random())
     for _ in xrange(attempts):
         try:
-            return opener.open('http://www.google.com/search?q=%s%%20salary' % '%20'.join(keywords)).read()
+            return opener.open(search_url % '%20'.join(keywords)).read()
         except urllib2.URLError as e:
             print e
             if _ < attempts - 1:
@@ -52,7 +63,9 @@ def search_all_keywords(job_keywords, location_keywords):
         with the location
     """
     split_space = re.compile(' +')
-    cleaned_job_keywords = list(set(map(lambda keyword: keyword.strip().strip(','), job_keywords)))
+    cleaned_job_keywords = list(set(filter(lambda x: len(x) > 1,
+                                           map(lambda keyword: keyword.strip().strip(',/&:()'),
+                                               job_keywords))))
 
     """
         If we get a result using all keywords, we stop.  Otherwise, we try removing i=1,2,3...
