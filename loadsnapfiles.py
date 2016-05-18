@@ -1,6 +1,6 @@
 # Load files from SNAP (https://snap.stanford.edu/data/) into NetworkX
 import sys
-import os
+import os, os.path
 import re
 import networkx as nx
 import google_crawl as crawl
@@ -38,7 +38,8 @@ def get_valid_networks(directory):
     for network_id in networks:
         network = networks[network_id]
         if all(filetype in network for filetype in 
-                ['edges', 'circles', 'feat', 'egofeat', 'featnames', 'filter']):
+                ['edges', 'circles', 'feat', 'egofeat', 'featnames']):
+                # ['edges', 'circles', 'feat', 'egofeat', 'featnames', 'filter']):
             valid_network_ids.append(network_id)
     
     return list(set(valid_network_ids))
@@ -61,7 +62,7 @@ def load_files(directory, network_id):
     feat_file = open("%s/%s.feat" % (directory, network_id))
     egofeat_file = open("%s/%s.egofeat" % (directory, network_id))
     featnames_file = open("%s/%s.featnames" % (directory, network_id))
-    filter_file = open("%s/%s.filter" % (directory, network_id))
+    # filter_file = open("%s/%s.filter" % (directory, network_id))
     
     # Read in graph information
     def split_line(x):
@@ -149,11 +150,25 @@ def load_files(directory, network_id):
     split_job_desc = re.compile('[0-9]+ job_title:')
 
     user_salaries = {}
+
+    # If it is a file, load saved results
+    if os.path.isfile("%s/%s.salaries" % (directory, network_id)):
+        # load file
+        salary_file = open("%s/%s.salaries" % (directory, network_id))
+        split_comma = re.compile(',')
+        for line in salary_file:
+            user_id, str_salary = split_comma.split(line.strip())
+            user_salaries[user_id] = float(str_salary)
+        salary_file.close()
+
+    # Compute salaries and save them into file if they are not computed already
+    salary_file = open("%s/%s.salaries" % (directory, network_id), "a")
     for user_id in features:
         # nonzero indices that have a salary value in the .filter (salary) file
         # nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
         #                          xrange(len(features[user_id])))
-
+        if user_id in user_salaries:
+            continue
         # TODO: search
         nonzero_indices = filter(lambda x: features[user_id][x] == 1, xrange(len(features[user_id])))
         job_keywords = []
@@ -171,10 +186,11 @@ def load_files(directory, network_id):
             user_salaries[user_id] = -1.0
         else:
             user_salaries[user_id] = crawl.search_all_keywords(job_keywords, location_keywords)
+        salary_file.write("%s,%f\n" % (user_id, user_salaries[user_id]))
         # salaries = map(lambda index: salary_dic[index], nonzero_indices)
         # user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
         # user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
-
+    salary_file.close()
     # Done!
     
     # network = Network.Network(featuresVec, featuresName, g)
@@ -185,7 +201,7 @@ def load_files(directory, network_id):
     feat_file.close()
     egofeat_file.close()
     featnames_file.close()
-    filter_file.close()
+    # filter_file.close()
     
     return network
     # pass
