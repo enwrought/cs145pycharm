@@ -7,6 +7,8 @@ import google_crawl as crawl
 
 import Network
 
+MAX_KEYWORDS = 8
+
 
 def get_valid_networks(directory):
     """ 
@@ -45,6 +47,7 @@ def get_valid_networks(directory):
 # TODO: Clean this up into smaller testable functions
 # TODO: Right now the files are loaded twice.  Fix this.
 def load_files(directory, network_id):
+    global MAX_KEYWORDS
     """
         @param {string} dir - Directory of files
         @param {string} networkid - network id (file name, without extensions)
@@ -80,7 +83,7 @@ def load_files(directory, network_id):
     
     # Read in features
     # feature_names = [line.strip() for line in featnames_file]
-    feature_names = [int(split_line(line.strip())[0]) for line in featnames_file]
+    feature_names = [line.strip() for line in featnames_file]
 
     features = {}
     # features now is
@@ -135,19 +138,42 @@ def load_files(directory, network_id):
     # Filter the features by available salaries
     # salary_dic = { index_of_feature: salary_in_thousands }
     # where index_of_feature (int) is the line number (0-indexed) in the featnames file
-    salary_dic = {int(split_line(line)[0]): int(split_line(line)[1]) for line in filter_file}
+    # salary_dic = {int(split_line(line)[0]): int(split_line(line)[1]) for line in filter_file}
+
+    # We no longer use salary_dic and use the google crawl instead
+
     # Estimate of the average salary, assuming each word is weighted approximately equally
     # average_salary = float(sum(salary_dic.values())) / len(salary_dic.values())
+
+    split_location = re.compile('[0-9]+ place:')
+    split_job_desc = re.compile('[0-9]+ job_title:')
 
     user_salaries = {}
     for user_id in features:
         # nonzero indices that have a salary value in the .filter (salary) file
-        nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
-                                 xrange(len(features[user_id])))
+        # nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
+        #                          xrange(len(features[user_id])))
+
         # TODO: search
-        salaries = map(lambda index: salary_dic[index], nonzero_indices)
+        nonzero_indices = filter(lambda x: features[user_id][x] == 1, xrange(len(features[user_id])))
+        job_keywords = []
+        location_keywords = []
+        for index in nonzero_indices:
+            keywords = split_job_desc.split(feature_names[index])
+            location = split_location.split(feature_names[index])
+            if len(keywords) == 2:
+                job_keywords.append(keywords[1])
+            elif len(location) == 2:
+                location_keywords.append(location[1])
+
+        # Ignore if there are more than 8 job_keywords since it's probably noise
+        if len(job_keywords) >= MAX_KEYWORDS:
+            user_salaries[user_id] = -1.0
+        else:
+            user_salaries[user_id] = crawl.search_all_keywords(job_keywords, location_keywords)
+        # salaries = map(lambda index: salary_dic[index], nonzero_indices)
         # user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
-        user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
+        # user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
 
     # Done!
     
