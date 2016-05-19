@@ -34,6 +34,9 @@ class Network:
         self.edgeWeights = (self.friend_dist(networkx_obj)
                             if not all_pairs_edges else all_pairs_edges)
 
+        self.pairWeights = (self.pair_dist(networkx_obj)
+                            if not all_pairs_edges else all_pairs_edges)
+
         self.salaries = featureSalary.FeatureSalary(self)
         # Add edge weights to networkx object
 
@@ -58,6 +61,25 @@ class Network:
             weights[edge] = weight
 
         return weights
+
+    def pair_dist(self, graph):
+        """
+            Calculate distances in graph as inverse of number of mutual friends
+            over all pairs of nodes
+        """
+
+        nodes = nx.nodes(graph)
+
+        weights = {}
+
+        for i in range(len(nodes)):
+            for j in range(len(nodes[i+1:])):
+                pair = (nodes[i], nodes[j])
+                weight = self.__ratio_mutual_friends_product(graph, pair)
+                weights[pair] = weight
+
+        return weights
+
 
     def __num_mutual_friends(self, graph, edge):
         return len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
