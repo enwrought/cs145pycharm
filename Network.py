@@ -85,17 +85,14 @@ class Network:
     def __num_mutual_friends(self, graph, edge):
         return len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
 
-    """
-    # We don't use this right now
-
-    def __ratio_mutual_friends(self, graph, edge):
-        intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
-        union = len(set(nx.neighbors(graph, edge[0])) | set(nx.neighbors(graph, edge[1])))
-        return float(intersection) / union
-    """
 
     def __ratio_mutual_friends_product(self, graph, edge):
         intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
         union = len(nx.neighbors(graph, edge[0])) * len(nx.neighbors(graph, edge[1]))
+
+
+    def __ratio_mutual_friends_product(self, graph, edge):
+        intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+        union = len(nx.neighbors(graph, edge[0]))  * len(nx.neighbors(graph, edge[1]))
         return float(intersection) / math.sqrt(union)
 

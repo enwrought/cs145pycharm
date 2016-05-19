@@ -3,7 +3,9 @@ import numpy as np
 import scipy
 import scipy.stats
 import math
+import bisect
 import matplotlib.pyplot as plt
+from scipy.stats import chisquare
 
 
 class FeatureSalary:
@@ -62,6 +64,7 @@ class FeatureSalary:
             sets edge weights as ratio of salaries between connected nodes
 
             If either of the salaries are 0, then we set it to some negative value we can filter
+
         """
         nodes = nx.nodes(graph)
 
@@ -98,6 +101,35 @@ class FeatureSalary:
                 ratio = -1.0
             salRatioEdges[edge] = ratio
         return salRatioEdges
+
+
+    def index(self, a, x):
+        'Locate the leftmost value exactly equal to x'
+        i = bisect.bisect_left(a, x)
+        if i != len(a) and a[i] == x:
+            return i
+        raise ValueError
+
+    def find_le(self, a, x):
+        'Find rightmost value less than or equal to x'
+        i = bisect.bisect_right(a, x)
+        if i:
+            return a[i-1]
+        raise ValueError
+
+
+    def getChiSquare(self, salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs):
+        expected = []
+        for i in salEdges:
+            val = self.find_le(salPairs, i)
+            index = self.index(salPairs, val)
+            expected.append(sal_percentile_pairs[index])
+
+        chisq, p = chisquare(sal_percentile_edges, expected)
+
+        return (chisq, p)
+
+
 
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
@@ -233,9 +265,9 @@ class FeatureSalary:
 
         fig12 = plt.figure(12)
         salEdges2 = sorted(salEdges2)
-        salary_diff_percentile = map(lambda x: float(x) / len(salEdges2),
+        sal_percentile_edges = map(lambda x: float(x) / len(salEdges2),
                                      xrange(len(salEdges2)))
-        plt.plot(salEdges2, salary_diff_percentile, 'b-')
+        plt.plot(salEdges2, sal_percentile_edges, 'b-')
         plt.xlabel('Salary difference')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference')
@@ -244,13 +276,24 @@ class FeatureSalary:
 
         fig13 = plt.figure(13)
         salPairs = sorted(salPairs)
-        salary_diff_percentile_pairs = map(lambda x: float(x) / len(salPairs),
+        sal_percentile_pairs = map(lambda x: float(x) / len(salPairs),
                                            xrange(len(salPairs)))
-        plt.plot(salPairs, salary_diff_percentile_pairs, 'b-')
+        plt.plot(salPairs, sal_percentile_pairs, 'b-')
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference on Node Pairs')
         plt.savefig(self.network.name + '_cdf_all_pairs_salary_diff.png')
         plt.close(fig13)
+
+        plt.figure(14)
+        plt.plot(salEdges2, sal_percentile_edges, label='Edges')
+        plt.plot(salPairs, sal_percentile_pairs, label='Pairs')
+        plt.xlabel('Salary difference (thousands)')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Salary Difference on Node Pairs and Edges')
+        plt.legend()
+
+
+        print self.getChiSquare(salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs)
 
         plt.show()
