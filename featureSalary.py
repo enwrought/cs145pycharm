@@ -34,9 +34,10 @@ class FeatureSalary:
 
         # List of positive indices
         self.positive_income = filter(lambda x: self.salVals[x] >= 0, xrange(len(self.salVals)))
-        self.positive_ratios = filter(lambda x: self.salEdgeWeights.values()[x] >= 0, xrange(len(self.salVals)))
+        self.positive_ratios = filter(lambda x: self.salEdgeWeights.values()[x] >= 0,
+                                      xrange(len(self.salEdgeWeights)))
 
-        self.generateGraphs()
+        # self.generateGraphs()
 
     # TODO: pass in a "metric" lambda function instead of automatically defaulting to minRatio
     def getSalEdgeWeights(self, graph, salaries):

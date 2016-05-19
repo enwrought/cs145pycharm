@@ -26,7 +26,7 @@ def query_google(keywords, attempts=3):
     opener = urllib2.build_opener()
     opener.addheaders = [('User-agent', random.choice(header))]
 
-    time.sleep(random.choice(xrange(10)) + random.random())
+    time.sleep(random.choice(xrange(5)) + random.random())
     for _ in xrange(attempts):
         try:
             return opener.open(search_url % '%20'.join(keywords)).read()
