@@ -194,7 +194,7 @@ def load_files(directory, network_id):
     # Done!
     
     # network = Network.Network(featuresVec, featuresName, g)
-    network = Network.Network(user_salaries, features, g)
+    network = Network.Network(user_salaries, features, g, network_id)
 
     edges_file.close()
     circles_file.close()
