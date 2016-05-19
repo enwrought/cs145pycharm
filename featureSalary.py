@@ -1,7 +1,9 @@
 import networkx as nx
 import numpy as np
 import math
+import bisect
 import matplotlib.pyplot as plt
+from scipy.stats import chisquare
 
 
 class FeatureSalary:
@@ -87,6 +89,34 @@ class FeatureSalary:
         return salRatioEdges
 
 
+    def index(self, a, x):
+        'Locate the leftmost value exactly equal to x'
+        i = bisect.bisect_left(a, x)
+        if i != len(a) and a[i] == x:
+            return i
+        raise ValueError
+
+    def find_le(self, a, x):
+        'Find rightmost value less than or equal to x'
+        i = bisect.bisect_right(a, x)
+        if i:
+            return a[i-1]
+        raise ValueError
+
+
+    def getChiSquare(self, salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs):
+        expected = []
+        for i in salEdges:
+            val = self.find_le(salPairs, i)
+            index = self.index(salPairs, val)
+            expected.append(sal_percentile_pairs[index])
+
+        chisq, p = chisquare(sal_percentile_edges, expected)
+
+        return (chisq, p)
+
+
+
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
         print('generating graphs')
@@ -99,111 +129,115 @@ class FeatureSalary:
 
         salVals = map(lambda x: self.salVals[x], self.positive_income)
 
-        # Histogram of edge weights from network
-        plt.figure(1)
-        plt.hist(edgeWeights)
-        plt.xlabel('Weight')
-        plt.ylabel('Frequency')
-        plt.title('Mutual Friend Frequencies')
+        # # Histogram of edge weights from network
+        # plt.figure(1)
+        # plt.hist(edgeWeights)
+        # plt.xlabel('Weight')
+        # plt.ylabel('Frequency')
+        # plt.title('Mutual Friend Frequencies')
 
-        # Histogram of salaries of all nodes
-        plt.figure(2)
-        plt.hist(salVals, bins=40)
-        plt.xlabel('Salary')
-        plt.ylabel('Frequency')
-        plt.title('Salary Frequencies')
+        # # Histogram of salaries of all nodes
+        # plt.figure(2)
+        # plt.hist(salVals, bins=40)
+        # plt.xlabel('Salary')
+        # plt.ylabel('Frequency')
+        # plt.title('Salary Frequencies')
 
-        # Histogram of salary ratios along edges
-        plt.figure(3)
-        plt.hist(salEdges)
-        plt.xlabel('Salary Differences on Edges')
-        plt.ylabel('Frequency')
-        plt.title('Salary Difference on Edges Frequencies')
+        # # Histogram of salary ratios along edges
+        # plt.figure(3)
+        # plt.hist(salEdges)
+        # plt.xlabel('Salary Differences on Edges')
+        # plt.ylabel('Frequency')
+        # plt.title('Salary Difference on Edges Frequencies')
 
-        plt.figure(4)
-        # TODO: double check that .values() returns the same order
-        plt.plot(edgeWeights, salEdges, 'ro')
-        plt.xlabel('Mutual Friends')
-        plt.ylabel('Salary Ratios')
-        plt.title('Mutual Friends vs Salary Differences')
-
-
-        plt.figure(5)
-        # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(), self.salEdgeWeights.values(), bins=50)
-        # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-        # plt.imshow(heatmap, extent=extent)
-        plt.hexbin(edgeWeights, salEdges, gridsize=40, bins=15)
-        cb = plt.colorbar()
-        plt.xlabel('Mutual Friends')
-        plt.ylabel('Salary Difference')
-        plt.title('Mutual Friends vs Salary Differences')
+        # plt.figure(4)
+        # # TODO: double check that .values() returns the same order
+        # plt.plot(edgeWeights, salEdges, 'ro')
+        # plt.xlabel('Mutual Friends')
+        # plt.ylabel('Salary Ratios')
+        # plt.title('Mutual Friends vs Salary Differences')
 
 
-        # plt.figure(6)
-        # plt.hexbin(edgeWeights, salEdges, gridsize=(25,10), bins=15)
-        # plt.axis([min(edgeWeights), 50, min(salEdges), 20])
+        # plt.figure(5)
+        # # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(), self.salEdgeWeights.values(), bins=50)
+        # # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
+        # # plt.imshow(heatmap, extent=extent)
+        # plt.hexbin(edgeWeights, salEdges, gridsize=40, bins=15)
         # cb = plt.colorbar()
         # plt.xlabel('Mutual Friends')
         # plt.ylabel('Salary Difference')
         # plt.title('Mutual Friends vs Salary Differences')
 
-        plt.figure(7)
-        sorted_edge_weights = sorted(edgeWeights)
-        edge_weights_percentile = map(lambda x: float(x)/len(sorted_edge_weights), xrange(len(sorted_edge_weights)))
-        plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
-        plt.xlabel('Number of mutual friends')
-        plt.ylabel('Percentile')
-        plt.title('CDF of Social Distance')
 
-        plt.figure(8)
-        sorted_salaries = sorted(salVals)
-        salaries_percentile = map(lambda x: float(x) / len(sorted_salaries), xrange(len(sorted_salaries)))
-        plt.plot(sorted_salaries, salaries_percentile, 'b-')
-        plt.xlabel('Annual income (thousands)')
-        plt.ylabel('Percentile')
-        plt.title('CDF of Salary')
+        # # plt.figure(6)
+        # # plt.hexbin(edgeWeights, salEdges, gridsize=(25,10), bins=15)
+        # # plt.axis([min(edgeWeights), 50, min(salEdges), 20])
+        # # cb = plt.colorbar()
+        # # plt.xlabel('Mutual Friends')
+        # # plt.ylabel('Salary Difference')
+        # # plt.title('Mutual Friends vs Salary Differences')
 
-        plt.figure(9)
-        sorted_edge_weights = map(lambda x: math.log(x), sorted(edgeWeights))
-        edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)), xrange(len(sorted_edge_weights)))
-        plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
-        plt.xlabel('log (# mutual friends)')
-        plt.ylabel('log P(#mutual friends > x)')
-        plt.title('Log-Log Rank Plot of Social Distance')
+        # plt.figure(7)
+        # sorted_edge_weights = sorted(edgeWeights)
+        # edge_weights_percentile = map(lambda x: float(x)/len(sorted_edge_weights), xrange(len(sorted_edge_weights)))
+        # plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
+        # plt.xlabel('Number of mutual friends')
+        # plt.ylabel('Percentile')
+        # plt.title('CDF of Social Distance')
 
-        plt.figure(10)
-        sorted_salaries = map(lambda x: math.log(x), sorted(salVals))
-        salaries_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salaries)), xrange(len(sorted_salaries)))
-        plt.plot(sorted_salaries, salaries_percentile, 'b-')
-        plt.xlabel('Log (Annual income (thousands))')
-        plt.ylabel('log P(Salary > x)')
-        plt.title('Log-Log Rank Plot of Salary')
+        # plt.figure(8)
+        # sorted_salaries = sorted(salVals)
+        # salaries_percentile = map(lambda x: float(x) / len(sorted_salaries), xrange(len(sorted_salaries)))
+        # plt.plot(sorted_salaries, salaries_percentile, 'b-')
+        # plt.xlabel('Annual income (thousands)')
+        # plt.ylabel('Percentile')
+        # plt.title('CDF of Salary')
 
-        plt.figure(11)
-        salEdges2 = filter(lambda x: x > 0, salEdges)
-        sorted_salary_diff = map(lambda x: math.log(x), sorted(salEdges2))
-        salary_diff_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salary_diff)), xrange(len(sorted_salary_diff)))
-        plt.plot(sorted_salary_diff, salary_diff_percentile, 'b-')
-        plt.xlabel('Log (Salary Difference)')
-        plt.ylabel('log P(Salary Difference > x)')
-        plt.title('Log-Log Rank Plot of Salary Differences')
+        # plt.figure(9)
+        # print sorted(edgeWeights)
+        # sorted_edge_weights = map(lambda x: math.log(x), sorted(edgeWeights))
+        # edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)), xrange(len(sorted_edge_weights)))
+        # plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
+        # plt.xlabel('log (# mutual friends)')
+        # plt.ylabel('log P(#mutual friends > x)')
+        # plt.title('Log-Log Rank Plot of Social Distance')
+
+        # plt.figure(10)
+        # sorted_salaries = map(lambda x: math.log(x), sorted(salVals))
+        # salaries_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salaries)), xrange(len(sorted_salaries)))
+        # plt.plot(sorted_salaries, salaries_percentile, 'b-')
+        # plt.xlabel('Log (Annual income (thousands))')
+        # plt.ylabel('log P(Salary > x)')
+        # plt.title('Log-Log Rank Plot of Salary')
+
+        # plt.figure(11)
+        # salEdges2 = filter(lambda x: x > 0, salEdges)
+        # sorted_salary_diff = map(lambda x: math.log(x), sorted(salEdges2))
+        # salary_diff_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_salary_diff)), xrange(len(sorted_salary_diff)))
+        # plt.plot(sorted_salary_diff, salary_diff_percentile, 'b-')
+        # plt.xlabel('Log (Salary Difference)')
+        # plt.ylabel('log P(Salary Difference > x)')
+        # plt.title('Log-Log Rank Plot of Salary Differences')
 
         plt.figure(12)
         salEdges = sorted(salEdges)
-        salary_diff_percentile_edges = map(lambda x: float(x) / len(salEdges),
+        sal_percentile_edges = map(lambda x: float(x) / len(salEdges),
                                      xrange(len(salEdges)))
-        plt.plot(salEdges, salary_diff_percentile_edges, 'b-')
+        plt.plot(salEdges, sal_percentile_edges, 'b-')
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference on Edges')
 
         plt.figure(13)
         salPairs = sorted(salPairs)
-        salary_diff_percentile_pairs = map(lambda x: float(x) / len(salPairs),
+        sal_percentile_pairs = map(lambda x: float(x) / len(salPairs),
                                      xrange(len(salPairs)))
-        plt.plot(salPairs, salary_diff_percentile_pairs, 'b-')
+        plt.plot(salPairs, sal_percentile_pairs, 'b-')
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference on Node Pairs')
+
+
+        print self.getChiSquare(salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs)
 
         plt.show()
