@@ -37,9 +37,9 @@ class FeatureSalary:
         print('filtering...')
         print len(self.salEdgeWeights)
         print len(self.salPairWeights)
-        self.positive_income = filter(lambda x: self.salVals[x] >= 0, xrange(len(self.salVals)))
-        self.positive_edge_weights = filter(lambda x: self.salEdgeWeights.values()[x] >= 0, xrange(len(self.salEdgeWeights)))
-        self.positive_pair_weights = filter(lambda x: self.salPairWeights.values()[x] >= 0, xrange(len(self.salPairWeights)))
+        self.positive_income = filter(lambda x: self.salVals[x] > 0, xrange(len(self.salVals)))
+        self.positive_edge_weights = filter(lambda x: self.salEdgeWeights.values()[x] > 0, xrange(len(self.salEdgeWeights)))
+        self.positive_pair_weights = filter(lambda x: self.salPairWeights.values()[x] > 0, xrange(len(self.salPairWeights)))
         print('filtered')
         self.generateGraphs()
 
@@ -236,6 +236,14 @@ class FeatureSalary:
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference on Node Pairs')
+
+        plt.figure(14)
+        plt.plot(salEdges, sal_percentile_edges, label='Edges')
+        plt.plot(salPairs, sal_percentile_pairs, label='Pairs')
+        plt.xlabel('Salary difference (thousands)')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Salary Difference on Node Pairs and Edges')
+        plt.legend()
 
 
         print self.getChiSquare(salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs)
