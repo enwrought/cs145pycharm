@@ -99,6 +99,34 @@ class FeatureSalary:
             salRatioEdges[edge] = ratio
         return salRatioEdges
 
+
+    def index(self, a, x):
+        'Locate the leftmost value exactly equal to x'
+        i = bisect.bisect_left(a, x)
+        if i != len(a) and a[i] == x:
+            return i
+        raise ValueError
+
+    def find_le(self, a, x):
+        'Find rightmost value less than or equal to x'
+        i = bisect.bisect_right(a, x)
+        if i:
+            return a[i-1]
+        raise ValueError
+
+
+    def getChiSquare(self, salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs):
+        expected = []
+        for i in salEdges:
+            val = self.find_le(salPairs, i)
+            index = self.index(salPairs, val)
+            expected.append(sal_percentile_pairs[index])
+
+        chisq, p = chisquare(sal_percentile_edges, expected)
+
+        return (chisq, p)
+
+
     # TODO: Have a generic graph function that supports plot arguments and saving files instead of repeating 4 times
     def generateGraphs(self):
         print('generating graphs')
