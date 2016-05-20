@@ -20,6 +20,7 @@ class FeatureSalary:
     def __init__(self, network):
 
         self.network = network
+        print len(nx.nodes(self.network.graph))
         # 1) We don't use this. 2) This is definitely wrong
         # self.edgeList = nx.edges(network)
         self.salEdgeWeights = self.getSalEdgeWeights(network.graph, network.featureVec)
@@ -40,7 +41,9 @@ class FeatureSalary:
         self.positive_income = filter(lambda x: self.salVals[x] > 0, xrange(len(self.salVals)))
         self.positive_edge_weights = filter(lambda x: self.salEdgeWeights.values()[x] > 0, xrange(len(self.salEdgeWeights)))
         self.positive_pair_weights = filter(lambda x: self.salPairWeights.values()[x] > 0, xrange(len(self.salPairWeights)))
-        self.positive_comp_weights = filter(lambda x: self.salPairWeights.keys()[x] not in self.salEdgeWeights, self.positive_pair_weights)
+        self.positive_comp_weights = filter(lambda x: self.salPairWeights.keys()[x] not in self.salEdgeWeights
+                                                        and self.salPairWeights.keys()[x][::-1] not in self.salEdgeWeights, 
+                                                        self.positive_pair_weights)
         print('filtered')
         self.generateGraphs()
 
@@ -112,12 +115,6 @@ class FeatureSalary:
         pair_hist, pair_bin_edges = np.histogram(salPairs, density=True, bins=bins, range=bounds)
         comp_hist, comp_bin_edges = np.histogram(salComp, density=True, bins=bins, range=bounds)
 
-        print edge_bin_edges
-        print pair_bin_edges
-
-        print edge_hist
-        print pair_hist
-
         edge_hist += 1e-10
         pair_hist += 1e-10
         comp_hist += 1e-10
@@ -186,15 +183,23 @@ class FeatureSalary:
         # plt.title('Mutual Friends vs Salary Differences')
 
 
-        # plt.figure(5)
-        # # heatmap, xedges, yedges = np.histogram2d(self.network.edgeWeights.values(), self.salEdgeWeights.values(), bins=50)
-        # # extent = [xedges[0], xedges[-1], yedges[0], yedges[-1]]
-        # # plt.imshow(heatmap, extent=extent)
-        # plt.hexbin(edgeWeights, salEdges, gridsize=40, bins=15)
-        # cb = plt.colorbar()
-        # plt.xlabel('Mutual Friends')
-        # plt.ylabel('Salary Difference')
-        # plt.title('Mutual Friends vs Salary Differences')
+
+        plt.figure(5)
+        weight_hist, weight_bin_edges = np.histogram(edgeWeights, bins=40, range=(min(edgeWeights), max(edgeWeights) + 1e-5))
+        bin_len = weight_bin_edges[1] - weight_bin_edges[0]
+        normedSalEdges = []
+        print weight_hist
+
+        for i in xrange(len(salEdges)):
+            bin_size = weight_hist[int((edgeWeights[i] - weight_bin_edges[0]) / bin_len)]
+            normedSalEdges.append(salEdges[i] / bin_size)
+        plt.hexbin(edgeWeights, normedSalEdges, gridsize=(40, 1000), bins=15)
+        plt.axis([min(edgeWeights), max(edgeWeights), 0, 1])
+        cb = plt.colorbar()
+        plt.xlabel('Mutual Friends')
+        plt.ylabel('Salary Difference')
+        plt.title('Mutual Friends vs Salary Differences')
+
 
 
         # # plt.figure(6)
