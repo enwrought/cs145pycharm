@@ -40,6 +40,7 @@ class FeatureSalary:
         self.positive_income = filter(lambda x: self.salVals[x] > 0, xrange(len(self.salVals)))
         self.positive_edge_weights = filter(lambda x: self.salEdgeWeights.values()[x] > 0, xrange(len(self.salEdgeWeights)))
         self.positive_pair_weights = filter(lambda x: self.salPairWeights.values()[x] > 0, xrange(len(self.salPairWeights)))
+        self.positive_comp_weights = filter(lambda x: self.salPairWeights.keys()[x] not in self.salEdgeWeights, self.positive_pair_weights)
         print('filtered')
         self.generateGraphs()
 
@@ -104,16 +105,36 @@ class FeatureSalary:
         raise ValueError
 
 
-    def getChiSquare(self, salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs):
-        expected = []
-        for i in salEdges:
-            val = self.find_le(salPairs, i)
-            index = self.index(salPairs, val)
-            expected.append(sal_percentile_pairs[index])
+    def getChiSquare(self, salEdges, salPairs, salComp):
+        bounds = (min(salPairs), max(salPairs))
+        bins = 25
+        edge_hist, edge_bin_edges = np.histogram(salEdges, density=True, bins=bins, range=bounds)
+        pair_hist, pair_bin_edges = np.histogram(salPairs, density=True, bins=bins, range=bounds)
+        comp_hist, comp_bin_edges = np.histogram(salComp, density=True, bins=bins, range=bounds)
 
-        chisq, p = chisquare(sal_percentile_edges, expected)
+        print edge_bin_edges
+        print pair_bin_edges
 
-        return (chisq, p)
+        print edge_hist
+        print pair_hist
+
+        edge_hist += 1e-10
+        pair_hist += 1e-10
+        comp_hist += 1e-10
+
+        chisq1, p1 = chisquare(edge_hist, pair_hist)
+        chisq2, p2 = chisquare(edge_hist, comp_hist)
+
+
+        # expected = []
+        # for i in salEdges:
+        #     val = self.find_le(salPairs, i)
+        #     index = self.index(salPairs, val)
+        #     expected.append(sal_percentile_pairs[index])
+
+        # chisq, p = chisquare(sal_percentile_edges, expected)
+
+        return ((chisq1, p1), (chisq2, p2))
 
 
 
@@ -127,7 +148,14 @@ class FeatureSalary:
         edgeWeights = map(lambda x: self.network.edgeWeights.values()[x], self.positive_edge_weights)
         salEdges = map(lambda x: self.salEdgeWeights.values()[x], self.positive_edge_weights)
 
+        salComp = map(lambda x: self.salPairWeights.values()[x], self.positive_comp_weights)
+
         salVals = map(lambda x: self.salVals[x], self.positive_income)
+
+        print len(salEdges)
+        print len(salComp)
+        print len(salPairs)
+
 
         # # Histogram of edge weights from network
         # plt.figure(1)
@@ -194,7 +222,6 @@ class FeatureSalary:
         # plt.title('CDF of Salary')
 
         # plt.figure(9)
-        # print sorted(edgeWeights)
         # sorted_edge_weights = map(lambda x: math.log(x), sorted(edgeWeights))
         # edge_weights_percentile = map(lambda x: math.log(1 - float(x) / len(sorted_edge_weights)), xrange(len(sorted_edge_weights)))
         # plt.plot(sorted_edge_weights, edge_weights_percentile, 'b-')
@@ -238,14 +265,28 @@ class FeatureSalary:
         plt.title('CDF of Salary Difference on Node Pairs')
 
         plt.figure(14)
-        plt.plot(salEdges, sal_percentile_edges, label='Edges')
-        plt.plot(salPairs, sal_percentile_pairs, label='Pairs')
+        salComp = sorted(salComp)
+        sal_percentile_comp = map(lambda x: float(x) / len(salComp),
+                                     xrange(len(salComp)))
+        plt.plot(salComp, sal_percentile_comp, 'b-')
+        plt.xlabel('Salary difference (thousands)')
+        plt.ylabel('Percentile')
+        plt.title('CDF of Salary Difference on Non-Edge Node Pairs')
+
+        plt.figure(15)
+        plt.plot(salEdges, sal_percentile_edges, label='Edge Pairs')
+        plt.plot(salPairs, sal_percentile_pairs, label='All Pairs')
+        plt.plot(salComp, sal_percentile_comp, label='Non-Edge Pairs')
         plt.xlabel('Salary difference (thousands)')
         plt.ylabel('Percentile')
         plt.title('CDF of Salary Difference on Node Pairs and Edges')
         plt.legend()
 
 
-        print self.getChiSquare(salEdges, sal_percentile_edges, salPairs, sal_percentile_pairs)
+        print self.getChiSquare(salEdges, salPairs, salComp)
+
+        print 'Stdev Edges', np.std(salEdges)
+        print 'Stdev Pairs', np.std(salPairs)
+        print 'Stdev Complement', np.std(salComp)
 
         plt.show()

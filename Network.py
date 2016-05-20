@@ -57,7 +57,7 @@ class Network:
 
         # calculate edge weight and add to dictionary
         for edge in edges:
-            weight = self.__ratio_mutual_friends_product(graph, edge)
+            weight = self.__scaled_mutual_friends(graph, edge)
             weights[edge] = weight
 
         return weights
@@ -93,4 +93,11 @@ class Network:
         intersection = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
         union = len(nx.neighbors(graph, edge[0]))  * len(nx.neighbors(graph, edge[1]))
         return float(intersection) / math.sqrt(union)
+
+    def __scaled_mutual_friends(self, graph, edge):
+        num_mutual = len(sorted(nx.common_neighbors(graph, edge[0], edge[1])))
+        A = num_mutual / float(len(nx.neighbors(graph, edge[0])))
+        B = num_mutual / float(len(nx.neighbors(graph, edge[1])))
+
+        return num_mutual * math.sqrt(A * B) + 1
 
