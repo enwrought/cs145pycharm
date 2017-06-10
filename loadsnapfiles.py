@@ -1,10 +1,13 @@
 # Load files from SNAP (https://snap.stanford.edu/data/) into NetworkX
 import sys
-import os
+import os, os.path
 import re
 import networkx as nx
+import google_crawl as crawl
 
 import Network
+
+MAX_KEYWORDS = 8
 
 
 def get_valid_networks(directory):
@@ -36,12 +39,16 @@ def get_valid_networks(directory):
         network = networks[network_id]
         if all(filetype in network for filetype in 
                 ['edges', 'circles', 'feat', 'egofeat', 'featnames']):
+                # ['edges', 'circles', 'feat', 'egofeat', 'featnames', 'filter']):
             valid_network_ids.append(network_id)
     
     return list(set(valid_network_ids))
     
 
+# TODO: Clean this up into smaller testable functions
+# TODO: Right now the files are loaded twice.  Fix this.
 def load_files(directory, network_id):
+    global MAX_KEYWORDS
     """
         @param {string} dir - Directory of files
         @param {string} networkid - network id (file name, without extensions)
@@ -55,25 +62,46 @@ def load_files(directory, network_id):
     feat_file = open("%s/%s.feat" % (directory, network_id))
     egofeat_file = open("%s/%s.egofeat" % (directory, network_id))
     featnames_file = open("%s/%s.featnames" % (directory, network_id))
+    # filter_file = open("%s/%s.filter" % (directory, network_id))
     
     # Read in graph information
     def split_line(x):
-        return tuple(re.split(' ', x.strip()))
+        return tuple(re.split(' |\t', x.strip()))
     
     g = nx.Graph()
-    g.add_edges_from(split_line(line) for line in edges_file)
-    g.add_edges_from((network_id, circle_id) for circle_id in
-                     re.split('\t', circles_file.read().strip())[1:])
+    lis = [split_line(line) for line in edges_file]
+    g.add_edges_from(lis)
+    # g.add_edges_from(split_line(line) for line in edges_file)
+
+    # g_edges = g.edges()
+    # missing_edges = [line if line not in g_edges and (line[1], line[0]) not in g_edges else None for line in lis]
+    # sum(0 if value == None else 1 for value in missing_edges) = 0
+
+    circles = re.split('\n', circles_file.read())
+    for line in circles:
+        g.add_edges_from((network_id, circle_id) for circle_id in
+                         re.split('\t', line)[1:])
     
     # Read in features
+    # feature_names = [line.strip() for line in featnames_file]
     feature_names = [line.strip() for line in featnames_file]
-    features = {name: [] for name in feature_names}
-    features['data'] = []
+
+    features = {}
+    # features now is
+    # { user_id0 : [feat0_value, feat1_value, feat2_value, ...],
+    #   user_id1 : [....]
+    # }
+    # features['data'] = []
+
+    # Vector of features as they appear in data
+    # featuresVec = {}
+    # egoFeats = split_line(egofeat_file.read())
+    # featuresVec[network_id] = (map(int, egoFeats))
     
     # Features for network_id
     # features = { feature_name1: [network_ids that are True for feature_name1],
     #              feature_name2: [network_ids that are True for feature_name2], ...}
-    features['data'].append(network_id)
+    # features['data'].append(network_id)
 
     def to_bool(x):
         return False if x == '0' else True
@@ -85,33 +113,95 @@ def load_files(directory, network_id):
         # error
         raise Exception('Wrong size of features.')
     
-    for i in xrange(len(network_id_feat_values)):
-        features[feature_names[i]].append(network_id_feat_values[i])
+    # for i in xrange(len(network_id_feat_values)):
+    #     features[feature_names[i]].append(network_id_feat_values[i])
+    features[network_id] = network_id_feat_values
     
     # Repeat for other nodes (besides network_id) in network
     for line in feat_file:
         tmp = split_line(line)
-        feat_id = tmp[0]
+        user_id = tmp[0]
         feats = tmp[1:]
-        features['data'].append(feat_id)
+
+        # TODO: these are mostly False, so we should just have a sparse representation
+        # features['data'].append(user_id)
+        # featuresVec[feat_id] = (map(int, feats))
         feat_values = map(to_bool, feats)
         
         if len(feat_values) != len(feature_names):
             # error
             raise Exception('Wrong size of features.')
     
-        for i in xrange(len(feat_values)):
-            features[feature_names[i]].append(feat_values[i])
-    
+        # for i in xrange(len(feat_values)):
+        #     features[feature_names[i]].append(feat_values[i])
+        features[user_id] = feat_values
+
+    # Filter the features by available salaries
+    # salary_dic = { index_of_feature: salary_in_thousands }
+    # where index_of_feature (int) is the line number (0-indexed) in the featnames file
+    # salary_dic = {int(split_line(line)[0]): int(split_line(line)[1]) for line in filter_file}
+
+    # We no longer use salary_dic and use the google crawl instead
+
+    # Estimate of the average salary, assuming each word is weighted approximately equally
+    # average_salary = float(sum(salary_dic.values())) / len(salary_dic.values())
+
+    split_location = re.compile('[0-9]+ place:')
+    split_job_desc = re.compile('[0-9]+ job_title:')
+
+    user_salaries = {}
+
+    # If it is a file, load saved results
+    if os.path.isfile("%s/%s.salaries" % (directory, network_id)):
+        # load file
+        salary_file = open("%s/%s.salaries" % (directory, network_id))
+        split_comma = re.compile(',')
+        for line in salary_file:
+            user_id, str_salary = split_comma.split(line.strip())
+            user_salaries[user_id] = float(str_salary)
+        salary_file.close()
+
+    # Compute salaries and save them into file if they are not computed already
+    salary_file = open("%s/%s.salaries" % (directory, network_id), "a")
+    for user_id in features:
+        # nonzero indices that have a salary value in the .filter (salary) file
+        # nonzero_indices = filter(lambda x: features[user_id][x] == 1 and x in salary_dic,
+        #                          xrange(len(features[user_id])))
+        if user_id in user_salaries:
+            continue
+        # TODO: search
+        nonzero_indices = filter(lambda x: features[user_id][x] == 1, xrange(len(features[user_id])))
+        job_keywords = []
+        location_keywords = []
+        for index in nonzero_indices:
+            keywords = split_job_desc.split(feature_names[index])
+            location = split_location.split(feature_names[index])
+            if len(keywords) == 2:
+                job_keywords.append(keywords[1])
+            elif len(location) == 2:
+                location_keywords.append(location[1])
+
+        # Ignore if there are more than 8 job_keywords since it's probably noise
+        if len(job_keywords) >= MAX_KEYWORDS:
+            user_salaries[user_id] = -1.0
+        else:
+            user_salaries[user_id] = crawl.search_all_keywords(job_keywords, location_keywords)
+        salary_file.write("%s,%f\n" % (user_id, user_salaries[user_id]))
+        # salaries = map(lambda index: salary_dic[index], nonzero_indices)
+        # user_salaries[user_id] = average_salary if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
+        # user_salaries[user_id] = -1.0 if len(salaries) == 0 else float(sum(salaries)) / len(salaries)
+    salary_file.close()
     # Done!
     
-    network = Network.Network(features, g)
+    # network = Network.Network(featuresVec, featuresName, g)
+    network = Network.Network(user_salaries, features, g, network_id)
 
     edges_file.close()
     circles_file.close()
     feat_file.close()
     egofeat_file.close()
     featnames_file.close()
+    # filter_file.close()
     
     return network
     # pass
@@ -122,10 +212,10 @@ def load_networks(directory):
     print 'Loading information from networks: ' + ','.join(network_ids)
     networks = []
     for network_id in network_ids:
-        try:
-            networks.append(load_files(sys.argv[1], network_id))
-        except Exception as e:
-            print "Network %s failed with error: %s." % (network_id, e)
+        # try:
+        networks.append(load_files(sys.argv[1], network_id))
+        # except Exception as e:
+        #    print "Network %s failed with error: %s." % (network_id, e)
     print networks
 
 
